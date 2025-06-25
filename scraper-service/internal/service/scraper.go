@@ -6,7 +6,7 @@ import (
 	"log"
 	"regexp"
 
-	"github.com/child6yo/logger-bot/internal/producer"
+	"github.com/child6yo/logger-bot/scrapper-service/internal/producer"
 	"github.com/nxadm/tail"
 )
 

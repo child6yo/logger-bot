@@ -5,8 +5,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/child6yo/logger-bot/internal/app"
-	"github.com/child6yo/logger-bot/internal/config"
+	"github.com/child6yo/logger-bot/scrapper-service/internal/app"
+	"github.com/child6yo/logger-bot/scrapper-service/internal/config"
 )
 
 func main() {

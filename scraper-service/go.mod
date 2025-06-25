@@ -1,4 +1,4 @@
-module github.com/child6yo/logger-bot
+module github.com/child6yo/logger-bot/scrapper-service
 
 go 1.24.3
 

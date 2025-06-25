@@ -3,9 +3,9 @@ package app
 import (
 	"log"
 
-	"github.com/child6yo/logger-bot/internal/config"
-	"github.com/child6yo/logger-bot/internal/producer"
-	"github.com/child6yo/logger-bot/internal/service"
+	"github.com/child6yo/logger-bot/scrapper-service/internal/config"
+	"github.com/child6yo/logger-bot/scrapper-service/internal/producer"
+	"github.com/child6yo/logger-bot/scrapper-service/internal/service"
 )
 
 // Application определяет структуру менеджера приложения.
