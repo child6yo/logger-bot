@@ -1,0 +1,99 @@
+services:
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - ./redisdata:/data
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_USER=${REDIS_USER}
+      - REDIS_USER_PASSWORD=${REDIS_USER_PASSWORD}
+    networks:
+      - dev-network
+    command: >
+      sh -c '
+        mkdir -p /usr/local/etc/redis &&
+        echo "bind 0.0.0.0" > /usr/local/etc/redis/redis.conf &&
+        echo "requirepass $REDIS_PASSWORD" >> /usr/local/etc/redis/redis.conf &&
+        echo "appendonly yes" >> /usr/local/etc/redis/redis.conf &&
+        echo "appendfsync everysec" >> /usr/local/etc/redis/redis.conf &&
+        echo "user default on nopass ~* +@all" > /usr/local/etc/redis/users.acl &&
+        echo "user $REDIS_USER on >$REDIS_USER_PASSWORD ~* +@all" >> /usr/local/etc/redis/users.acl &&
+        redis-server /usr/local/etc/redis/redis.conf --aclfile /usr/local/etc/redis/users.acl
+      '
+  
+  kafka:
+    image: bitnami/kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:19091
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:19091
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_NODE_ID=1
+    volumes:
+      - ./scripts:/scripts
+    command: |
+        /opt/bitnami/scripts/kafka/run.sh &
+        sleep 15
+        /scripts/init_kafka.sh
+    networks:
+      - dev-network
+
+  logs-task:
+    build: ./example
+    container_name: logs-task
+    volumes:
+      - ./shared_data:/data 
+
+  scraper-service:
+    build: ./scraper-service
+    container_name: scraper-service
+    restart: always
+    environment:
+      - KAFKA_BROKER=${SS_KAFKA_BROKER}
+      - KAFKA_TOPIC=${SS_KAFKA_TOPIC}
+      - LOG_FILEPATH=${SS_LOG_FILEPATH}
+      - LOG_FILTER=${SS_LOG_FILTER}
+    depends_on:
+      - kafka
+      - logs-task
+    networks:
+      - dev-network
+    volumes:
+      - ./shared_data:/data
+
+  notification-service:
+    build: ./notification-service
+    container_name: notification-service
+    restart: always
+    environment:
+      - KAFKA_BROKER=${NS_KAFKA_BROKER}
+      - KAFKA_TOPIC=${NS_KAFKA_TOPIC}
+
+      - BOT_TOKEN=${NS_BOT_TOKEN}
+
+      - REDDIS_ADDRESS=${NS_REDDIS_ADDRESS}
+      - REDDIS_PASSWORD=${NS_REDDIS_PASSWORD}
+    depends_on: 
+     - kafka
+     - redis
+    volumes:
+      - ./:/app 
+    networks:
+      - dev-network
+
+networks:
+  dev-network:
+    driver: bridge
+
+volumes:
+  shared_data:

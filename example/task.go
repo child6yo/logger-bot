@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	logFileName = "logs.log"
+	logFileName = "/data/logs.log"
 	maxLines    = 200
 )
 
@@ -25,7 +25,7 @@ func main() {
 	go func() {
 		for {
 			generateLog()
-			time.Sleep(time.Millisecond * 100)
+			time.Sleep(time.Millisecond * 500)
 		}
 	}()
 
