@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	// ChatIDSet - название хранящегося в redis множества айди чатов
 	ChatIDSet = "chat_ids"
 )
 
