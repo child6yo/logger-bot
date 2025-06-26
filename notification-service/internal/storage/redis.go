@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -16,7 +17,7 @@ const (
 func NewRedis(address, password string) *redis.Client {
 	for {
 		rdb := redis.NewClient(&redis.Options{
-			Addr:     address,  // адрес Redis
+			Addr:     address,  // адрес
 			Password: password, // пароль
 			DB:       0,        // номер базы данных
 		})
@@ -25,6 +26,8 @@ func NewRedis(address, password string) *redis.Client {
 		if status.Err() == nil {
 			return rdb
 		}
+
+		log.Printf("redis: failed to connect to %s: %v, reconnecting...", status.Err(), address)
 	}
 }
 
@@ -34,25 +37,32 @@ func NewInt64RedisStorage(c *redis.Client) *RedisStorage[int64] {
 }
 
 // Store записывает значение в хранилище
-func (rs *RedisStorage[T]) Store(ctx context.Context, key string, value T) error {
-	err := rs.client.SAdd(ctx, key, value).Err()
+func (rs *RedisStorage[T]) Store(ctx context.Context, key string, value T) (err error) {
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("storage: failed to store value in %s: %v", key, err)
+		}
+	}()
 
-	return fmt.Errorf("storage: failed to store value in %s: %v", key, err)
+	err = rs.client.SAdd(ctx, key, value).Err()
+
+	return nil
 }
 
 // PickAll достает все значения из хранилища
-func (rs *RedisStorage[T]) PickAll(ctx context.Context, key string, convert func(string) (T, error)) (_ []T, err error) {
+func (rs *RedisStorage[T]) PickAll(ctx context.Context, key string, convert func(string) (T, error)) ([]T, error) {
 	values, err := rs.client.SMembers(ctx, key).Result()
 	if err != nil {
 		return nil, fmt.Errorf("storage: failed to pick values: %v", err)
 	}
 
-	result := make([]T, len(values))
-	for i, v := range values {
-		result[i], err = convert(v)
+	result := make([]T, 0, len(values))
+	for _, v := range values {
+		val, err := convert(v)
 		if err != nil {
 			return nil, fmt.Errorf("storage: failed to convert values: %v", err)
 		}
+		result = append(result, val)
 	}
 
 	return result, nil

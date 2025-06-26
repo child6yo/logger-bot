@@ -31,7 +31,7 @@ func (a *Application) StartApplication() {
 		log.Fatal(err)
 	}
 
-	scrapper := service.NewScraperService()
+	scrapper := service.NewScraperService(a.producer)
 	go func() {
 		err := scrapper.Start(a.LogFilepath, a.LogFilter)
 		if err != nil {

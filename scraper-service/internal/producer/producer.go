@@ -76,7 +76,7 @@ func (p *KafkaProducer) StopProducer() {
 func (p *KafkaProducer) SendStringMessage(event string) error {
 	msg := &sarama.ProducerMessage{
 		Topic: p.topic,
-		Value: sarama.ByteEncoder(event),
+		Value: sarama.StringEncoder(event),
 	}
 
 	p.producer.Input() <- msg

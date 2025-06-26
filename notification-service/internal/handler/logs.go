@@ -12,14 +12,14 @@ import (
 )
 
 // NewLogsHandler создает новый экземпляр Logs.
-func NewLogsHandler(bot *client.TelegramBot) *Logs {
-	return &Logs{bot: bot}
+func NewLogsHandler(bot *client.TelegramBot, storage storage.Storage[int64]) *Logs {
+	return &Logs{bot: bot, storage: storage}
 }
 
 // Handle отправляет логи в чат.
 func (l *Logs) Handle(ctx context.Context, message []byte) error {
 	convert := func(s string) (int64, error) {
-		n, err := (strconv.Atoi(s))
+		n, err := strconv.Atoi(s)
 		if err != nil {
 			return 0, fmt.Errorf("failed to convert %s to int", s)
 		}
@@ -31,14 +31,14 @@ func (l *Logs) Handle(ctx context.Context, message []byte) error {
 		return fmt.Errorf("handler: failed to pick chats: %v", err)
 	}
 
-	for chat := range chats {
+	for _, chat := range chats {
 		_, err := l.bot.Bot.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chat,
 			Text:   string(message),
 		})
 
 		if err != nil {
-			log.Printf("[ERROR] handler: failed to send message: %v", err)
+			log.Printf("[ERROR] handler: failed to send message to %d: %v", chat, err)
 		}
 	}
 

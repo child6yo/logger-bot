@@ -10,14 +10,9 @@ import (
 	"github.com/nxadm/tail"
 )
 
-// ScraperService имплементирует интерфейс Scraper.
-type ScraperService struct {
-	producer producer.Producer
-}
-
 // NewScraperService создает новый экземпляр ScraperService.
-func NewScraperService() *ScraperService {
-	return &ScraperService{}
+func NewScraperService(producer producer.Producer) *ScraperService {
+	return &ScraperService{producer: producer}
 }
 
 // Start запускает работу сборщика логов.
@@ -25,7 +20,7 @@ func NewScraperService() *ScraperService {
 //   - filepath - путь к файлу, с которого будут читаться логи.
 //   - filter - регулярное выражение, фильтрующее необходимые логи.
 func (ss *ScraperService) Start(filepath, filter string) error {
-	
+
 	// nxadm/tail следит за файлов в live-формате, чтение начинается с последней строки и ждет новых
 	t, err := tail.TailFile(filepath, tail.Config{
 		Follow:   true,

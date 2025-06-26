@@ -41,7 +41,7 @@ func (a *Application) StartApplication() {
 		a.bot.Start()
 	}()
 
-	handler := handler.NewHandler(bot)
+	handler := handler.NewHandler(bot, storage)
 
 	a.consumer = consumer.NewConnection(a.KafkaBrokers, a.KafkaTopics, "notification-group", 1, *handler)
 

@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"log"
 
 	"github.com/child6yo/logger-bot/notification-service/internal/storage"
 	"github.com/go-telegram/bot"
@@ -19,7 +20,10 @@ func New(token string, storage storage.Storage[int64]) (*TelegramBot, error) {
 func (tb *TelegramBot) Start() {
 	tb.Bot.RegisterHandler(bot.HandlerTypeMessageText, "/start", bot.MatchTypeExact, func(ctx context.Context, b *bot.Bot, update *models.Update) {
 		chatID := update.Message.Chat.ID
-		tb.storage.Store(ctx, storage.ChatIDSet, chatID)
+		err := tb.storage.Store(ctx, storage.ChatIDSet, chatID)
+		if err != nil {
+			log.Printf("failed to store chatID: %v", err)
+		}
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,
 			Text:   "Скоро тут появятся логи...",
